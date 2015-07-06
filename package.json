@@ -1,0 +1,34 @@
+{
+  "name": "mongoose-document-lock",
+  "description": "Temporary locking feature for mongodb document",
+  "author": "Laurent Chenay <lchenay@gmail.com>",
+  "version": "0.0.1",
+  "contributors": [
+    {
+      "name": "Laurent Chenay",
+      "email": "lchenay@gmail.com"
+    }
+  ],
+  "main": "./index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lchenay/mongoose-document-lock"
+  },
+  "bugs": {
+    "url": "https://github.com/npm lchenay/mongoose-document-lock/issues"
+  },
+  "keywords": [
+    "mongoose",
+    "locking"
+  ],
+  "peerDependencies": {
+    "mongoose": ">= 3.5.0 < 4"
+  },
+  "devDependencies": {
+    "mocha": "^2.2.5",
+    "mongoose": "~3.8.21"
+  },
+  "dependencies": {
+    "async": "^1.3.0"
+  }
+}

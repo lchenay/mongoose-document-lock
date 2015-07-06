@@ -2,7 +2,7 @@
 
 function documentLock(schema, options) {
     options = options || {}
-    var LOCK_TIME_FIRE = options.lockTimeFire || 1000;
+    var LOCK_TIME_FIRE = options.lockTimeFire || 1;
     var lockColumnName = "lockExpirationDate";
 
     //TODO: use curstom lock columns

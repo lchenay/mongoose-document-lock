@@ -32,7 +32,6 @@ describe('Document Lock', function() {
             var object = new Model();
 
             assert(object.getLock);
-            assert(object.isLocked);
             assert(object.releaseLock);
          });
     });
@@ -60,15 +59,13 @@ describe('Document Lock', function() {
                 function(next) {
                     object.getLock(next);
                 }, function(next) {
-                    instance2.isLocked(function (err, result) {
-                        assert(!err, err);
-                        assert(result);
+                    instance2.getLock(function (err) {
+                        assert(err, err);
                         object.releaseLock(function(err) {
                             assert(!err, err);
-                            instance2.isLocked(function(err, result) {
+                            instance2.getLock(function(err) {
                                 assert(!err, err);
-                                assert(!result);
-                                next()
+                                instance2.releaseLock(next)
                             });
                         })
                     });

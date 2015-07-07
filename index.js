@@ -1,7 +1,7 @@
 'use strict';
 
 function documentLock(schema, options) {
-    options = options || {}
+    options = options || {};
     //in ms
     var LOCK_TIME_FIRE = options.lockTimeFire || 1000;
     var lockColumnName = "lockExpirationDate";
@@ -16,8 +16,16 @@ function documentLock(schema, options) {
         var expirationDate = new Date();
         expirationDate.setSeconds(expirationDate.getSeconds() + LOCK_TIME_FIRE / 1000);
 
-        var query = {_id: self._id};
-        query[lockColumnName] = self[lockColumnName];
+        var maxDBExpirationDate = new Date();
+        maxDBExpirationDate.setSeconds(expirationDate.getSeconds() - LOCK_TIME_FIRE / 1000);
+
+        var query1 = {_id: self._id};
+        var query2 = {_id: self._id};
+
+        query1[lockColumnName] = null;
+        query2[lockColumnName] = {$lt: maxDBExpirationDate};
+
+        var query = {$or: [query1, query2]};
 
         var update = {};
         update[lockColumnName] = expirationDate;
@@ -35,44 +43,15 @@ function documentLock(schema, options) {
 
     schema.methods.getLock = function getLock(callback) {
         var self = this;
-        self.isLocked(function(err, locked) {
+        self.takeLock(function(err) {
             if (err) {
-                return callback(err);
+                return callback(err)
             }
-
-            if (locked) {
-                return callback(new Error("Can't get lock, document is allready locked"));
-            }
-
-            self.takeLock(function(err) {
-                if (err) {
-                    return callback(err)
-                }
-                self.lockTimer = setInterval(function() {
-                    self.takeLock()
-                }, LOCK_TIME_FIRE / 2);
-                callback();
-            })
-        });
-
-    };
-
-    schema.methods.isLocked = function isLocked(callback) {
-        var self = this;
-        self.model(self.constructor.modelName).findOne({_id: self._id}, function(err, doc) {
-            if (err) {
-                return callback(err);
-            }
-
-            if (doc[lockColumnName] == null) {
-                return callback(null, false);
-            }
-
-            if (doc[lockColumnName] < new Date()) {
-                return callback(null, false);
-            }
-            return callback(null, true);
-        });
+            self.lockTimer = setInterval(function() {
+                self.takeLock()
+            }, LOCK_TIME_FIRE / 2);
+            callback();
+        })
     };
 
     schema.methods.releaseLock = function releaseLock(callback) {

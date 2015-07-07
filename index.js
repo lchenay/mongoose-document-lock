@@ -2,7 +2,8 @@
 
 function documentLock(schema, options) {
     options = options || {}
-    var LOCK_TIME_FIRE = options.lockTimeFire || 1;
+    //in ms
+    var LOCK_TIME_FIRE = options.lockTimeFire || 1000;
     var lockColumnName = "lockExpirationDate";
 
     //TODO: use curstom lock columns
@@ -13,7 +14,7 @@ function documentLock(schema, options) {
     schema.methods.takeLock = function takeLock(callback) {
         var self = this;
         var expirationDate = new Date();
-        expirationDate.setSeconds(expirationDate.getSeconds() + LOCK_TIME_FIRE);
+        expirationDate.setSeconds(expirationDate.getSeconds() + LOCK_TIME_FIRE / 1000);
 
         var query = {_id: self._id};
         query[lockColumnName] = self[lockColumnName];

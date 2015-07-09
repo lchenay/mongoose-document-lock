@@ -91,5 +91,34 @@ describe('Document Lock', function() {
                 }
             ], done)
         });
+
+        it('should allow me to get lock on 2 differents columns', function(done) {
+            var Schema = new mongoose.Schema({name: String});
+            Schema.plugin(documentLock, {lockColumnNames: ["column1", "column2"]});
+            var Model = mongoose.model('Model3', Schema);
+            var object = new Model();
+            object.name = "Locked object";
+            object.save(function() {
+                object.getLock("column1", function(err) {
+                    assert(!err, err);
+                    object.getLock("column2", function(err) {
+                        assert(!err, err);
+                        object.getLock("column1", function(err) {
+                            assert(err, err);
+                            object.releaseLock("column1", function(err) {
+                                assert(!err, err);
+                                object.getLock("column2", function(err) {
+                                    assert(err, err);
+                                    object.releaseLock("column2", function(err) {
+                                        assert(!err, err);
+                                        done();
+                                    })
+                                })
+                            })
+                        })
+                    })
+                })
+            });
+        });
     });
 });

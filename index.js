@@ -74,7 +74,7 @@ function documentLock(schema, options) {
         }
 
         var self = this;
-        if (!self.lockTimer[columnName]) {
+        if (!self.lockTimer || !self.lockTimer[columnName]) {
             return callback(new Error("Releasing lock on an object that haven't aquired lock or was allready released"))
         }
         clearTimeout(self.lockTimer[columnName]);

@@ -31,10 +31,14 @@ function documentLock(schema, options) {
 
         var query = {$or: [query1, query2]};
 
-        var update = {};
-        update[columnName] = expirationDate;
+        var update = {$set: {}};
+        update["$set"][columnName] = expirationDate;
 
         self.model(self.constructor.modelName).update(query, update, function(err, numAffected) {
+            if (err) {
+                return callback(err)
+            }
+
             if (numAffected != 1) {
                 return callback(new Error("Unable to take lock. Someone take it before us"));
             }

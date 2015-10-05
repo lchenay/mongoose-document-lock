@@ -99,6 +99,24 @@ function documentLock(schema, options) {
             callback()
         });
     };
+
+    schema.methods.isLocked = function isLocked(columnName, callback) {
+        if (typeof columnName == "function") {
+            callback = columnName
+            columnName = options.lockColumnNames[0]
+        }
+
+        var self = this;
+        if (!self.lockTimer || !self.lockTimer[columnName]) {
+            return false
+        }
+
+        var today = new Date()
+
+        if (self[columnName] < today) {
+            return true
+        }
+    };
 }
 
 module.exports = documentLock;

@@ -100,7 +100,7 @@ function documentLock(schema, options) {
         self.lockTimer[columnName] = null;
 
         var query = {_id: self._id};
-        query[columnName] = self[columnName];
+        query[columnName] = self.get(columnName);
 
         var update = {};
         update[columnName] = null;

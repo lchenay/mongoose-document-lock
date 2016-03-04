@@ -15,25 +15,9 @@ function documentLock(schema, options) {
     });
     schema.add(data);
 
-    schema.methods.takeLock = function takeLock(columnName, callback) {
+    
+    function exec(query, update, columnName, expirationDate, callback) {
         var self = this;
-        var expirationDate = new Date();
-        expirationDate.setSeconds(expirationDate.getSeconds() + LOCK_TIME_FIRE / 1000);
-
-        var maxDBExpirationDate = new Date();
-        maxDBExpirationDate.setSeconds(expirationDate.getSeconds() - LOCK_TIME_FIRE / 1000);
-
-        var query1 = {_id: self._id};
-        var query2 = {_id: self._id};
-
-        query1[columnName] = null;
-        query2[columnName] = {$lt: maxDBExpirationDate};
-
-        var query = {$or: [query1, query2]};
-
-        var update = {$set: {}};
-        update["$set"][columnName] = expirationDate;
-
         self.model(self.constructor.modelName).update(query, update, function(err, numAffected) {
             if (err) {
                 return callback(err)
@@ -43,10 +27,41 @@ function documentLock(schema, options) {
                 return callback(new Error("Unable to take lock. Someone take it before us"));
             }
 
-            self[columnName] = expirationDate;
+            self.set(columnName, expirationDate);
 
             callback();
         });
+    }
+    
+    function forceLock(columnName, callback) {
+        var expirationDate = new Date();
+        expirationDate.setSeconds(expirationDate.getSeconds() + LOCK_TIME_FIRE / 1000);
+
+        var query = {_id: this._id};
+
+        var update = {$set: {}};
+        update["$set"][columnName] = expirationDate;
+
+        exec.call(this, query, update, columnName, expirationDate, callback)
+    };
+    
+    schema.methods.takeLock = function takeLock(columnName, callback) {
+        var expirationDate = new Date();
+        expirationDate.setSeconds(expirationDate.getSeconds() + LOCK_TIME_FIRE / 1000);
+
+        var maxDBExpirationDate = new Date();
+
+        var query1 = {_id: this._id};
+        var query2 = {_id: this._id};
+
+        query1[columnName] = null;
+        query2[columnName] = {$lt: maxDBExpirationDate};
+
+        var query = {$or: [query1, query2]};
+
+        var update = {$set: {}};
+        update["$set"][columnName] = expirationDate;
+        exec.call(this, query, update, columnName, expirationDate, callback)
     };
 
     schema.methods.getLock = function getLock(columnName, callback) {
@@ -65,7 +80,7 @@ function documentLock(schema, options) {
             }
 
             self.lockTimer[columnName] = setInterval(function() {
-                self.takeLock(columnName, function() {})
+                forceLock.call(self, columnName, function() {})
             }, LOCK_TIME_FIRE / 2);
             callback();
         })
@@ -95,7 +110,7 @@ function documentLock(schema, options) {
                 return callback(new Error("Unable to release lock. Someone change it before us."));
             }
 
-            self[columnName] = null;
+            self.set(columnName, null)
             callback()
         });
     };
@@ -106,16 +121,12 @@ function documentLock(schema, options) {
             columnName = options.lockColumnNames[0]
         }
 
-        var self = this;
-        if (!self.lockTimer || !self.lockTimer[columnName]) {
-            return false
-        }
-
         var today = new Date()
 
-        if (self[columnName] < today) {
+        if (this.get(columnName) > today) {
             return true
         }
+        return false
     };
 }
 

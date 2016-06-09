@@ -18,13 +18,13 @@ function documentLock(schema, options) {
     
     function exec(query, update, columnName, expirationDate, callback) {
         var self = this;
-        self.model(self.constructor.modelName).update(query, update, function(err, numAffected) {
+        self.constructor.collection.update(query, update, function(err, numAffected) {
             if (err) {
                 return callback(err)
             }
 
             if (numAffected != 1) {
-                return callback(new Error("Unable to take lock. Someone take it before us"));
+                return callback(new Error("Unable to take lock."));
             }
 
             self.set(columnName, expirationDate);

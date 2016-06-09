@@ -18,7 +18,7 @@ function documentLock(schema, options) {
     
     function exec(query, update, columnName, expirationDate, callback) {
         var self = this;
-        self.constructor.collection.update(query, update, function(err, numAffected) {
+        self.constructor.update(query, update, function(err, numAffected) {
             if (err) {
                 return callback(err)
             }
